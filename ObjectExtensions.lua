@@ -19,6 +19,7 @@ function Object:placeMovementRange()
     local M = self:getStat(Stats.M)
     spawnObject({
         scale = { M, M, M }
+        type = ''
     })
 end
 
