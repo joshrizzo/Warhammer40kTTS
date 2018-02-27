@@ -14,11 +14,9 @@ function Game.nextTurn(player)
     if Game.player.starting == "" then
         Game.player.starting = player
     end
-
     if Game.player.starting == player then
         Game.turn = Game.turn + 1
     end
-
     Game.nextPhase()
 end
 

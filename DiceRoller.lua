@@ -58,7 +58,7 @@ end
 function keepdice(threshold)
     for _, obj in pairs(getAllObjects()) do
         -- Fetch resting dices
-        if obj != nil and obj.tag == 'Dice' and obj.resting then
+        if obj ~= nil and obj.tag == 'Dice' and obj.resting then
             if obj.getValue() < threshold then
                 obj.destruct()
             end
@@ -74,7 +74,7 @@ end
 function keepdicelt(threshold)
     for _, obj in pairs(getAllObjects()) do
         -- Fetch resting dices
-        if obj != nil and obj.tag == 'Dice' and obj.resting then
+        if obj ~= nil and obj.tag == 'Dice' and obj.resting then
             if obj.getValue() >= threshold then
                 obj.destruct()
             end
@@ -160,7 +160,7 @@ end
 --rerolls dice lower than the value of the argument passed to the function
 function reroll(hit)
     for _, obj in pairs(getAllObjects()) do
-        if obj != nil and obj.tag == 'Dice' and obj.resting then
+        if obj ~= nil and obj.tag == 'Dice' and obj.resting then
             if obj.getValue() < hit then
                 obj.randomize()
             end
@@ -178,7 +178,7 @@ end
 function clearDice()
     for _, obj in pairs(getAllObjects()) do
         -- Fetch resting dice
-        if obj != nil and obj.tag == 'Dice' then
+        if obj ~= nil and obj.tag == 'Dice' then
             obj.destruct()
         end
     end
@@ -307,7 +307,7 @@ function update ()
     -- Iterate all objects in the zone
     for _, obj in pairs(getAllObjects()) do
         -- Fetch resting dices
-        if obj != nil and obj.tag == 'Dice' and obj.resting then
+        if obj ~= nil and obj.tag == 'Dice' and obj.resting then
             -- Only use objects inside the zone
             local objPos = obj.getPosition()
             if objPos['x'] > leftBound and objPos['x'] < rightBound and objPos['z'] > lowerBound and objPos['z'] < upperBound and objPos['y'] < yupperBound and objPos['y'] > ylowerBound then
