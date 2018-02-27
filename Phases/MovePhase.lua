@@ -1,31 +1,39 @@
-MovePhase = {
-    actions = {}
-}
+MovePhase = {}
+MovePhase.__index = PhaseBase
 
-function MovePhase.start()
-    Units.enableFriendliesOnly()
+function MovePhase:new(player, uiAdapter)
+    uiAdapter:enableFriendliesOnly()
+    return setmetatable(PhaseBase:new(player, uiAdapter), {__index = self})
 end
 
-function MovePhase.pickup(player, obj)
-    local currentLocation = obj.getPosition()
-    if player ~= Game.player.current then
-        obj.setPosition(currentLocation)
-        return
+function MovePhase:pickup(player, obj)
+    self.startingLocation = obj.getPosition()
+    if self.player ~= player then
+        self.uiAdapter:messagePlayers("Only the active player may move units.")
+        obj.setPosition(self.startingLocation)
     end
-    local movement = obj:getStat(Stats.M)
-    MovePhase.startingLocation = currentLocation
-    MovePhase.moveIndicator = Range.spawnIndicator(currentLocation, Colors.green, movement)
-    MovePhase.advanceIndicator = Range.spawnIndicator(currentLocation, Colors.yellow, movement + math.random(6))
-    MovePhase.M = M
+
+    local objID = obj.getGUID()
+    if objID ~= self.objectInMotion then
+        self.moveIndicator.destruct()
+        self.advanceIndicator.destruct()
+
+        --TODO: Move to UIAdapter
+        local lastObj = getObjectFromGUID(self.objId)
+        lastObj.setLocked(true)
+        lastObj.highlightOff(self.playerMoving[player])
+    end
+    self.objectInMotion = objID
+
+    self.movement = obj:getStat(Stats.M)
+    self.moveIndicator = self.UIAdapter.spawnIndicator(currentLocation, Colors.green, self.movement)
+
+    self.advanceMove = self.movement + math.random(6) --TODO: apply modifiers
+    self.advanceIndicator = self.UIAdapter.spawnIndicator(currentLocation, Colors.yellow, self.advanceMove)
 end
 
-function MovePhase.place(player, obj)
-    if player ~= Game.player.current or Range.distance(MovePhase.startingLocation, obj.getPosition()) > Move.M then
-        obj.setLocation(MovePhase.startingLocation)
-    else
-        obj.setLocked(true)
-        obj.highlightOff()
+function MovePhase:release(player, obj)
+    if Range.distance(self.startingLocation, obj.getPosition()) > self.advanceMove then
+        self.uiAdapter.messagePlayers("You must place the unit within its specified movement or advance range")
     end
-    MovePhase.moveIndicator.destruct()
-    MovePhase.advanceIndicator.destruct()
 end
