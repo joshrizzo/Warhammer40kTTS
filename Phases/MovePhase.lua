@@ -1,39 +1,44 @@
-MovePhase = {}
-MovePhase.__index = PhaseBase
+MovePhase = {
+    movement = nil,
+    movementIndicator = nil,
+    advanceMove = nil,
+    advanceIndicator = nil,
+    objectInMotion = nil
+}
 
-function MovePhase:new(player, uiAdapter)
-    uiAdapter:enableFriendliesOnly()
-    return setmetatable(PhaseBase:new(player, uiAdapter), {__index = self})
+function MovePhase.start() 
+    UIAdapter.enableFriendliesOnly()
 end
 
-function MovePhase:pickup(player, obj)
-    self.startingLocation = obj.getPosition()
-    if self.player ~= player then
-        self.uiAdapter:messagePlayers("Only the active player may move units.")
-        obj.setPosition(self.startingLocation)
+function MovePhase.pickup(player, obj)
+    if Game.players.current ~= player then
+        UIAdapter.messagePlayers("Only the active player may move units.")
+        obj:release()
     end
 
     local objID = obj.getGUID()
-    if objID ~= self.objectInMotion then
-        self.moveIndicator.destruct()
-        self.advanceIndicator.destruct()
+    if MovePhase.objectInMotion then
+        MovePhase.moveIndicator.destruct()
+        MovePhase.advanceIndicator.destruct()
+        UIAdapter.resetObject(MovePhase.objectInMotion)
 
-        --TODO: Move to UIAdapter
-        local lastObj = getObjectFromGUID(self.objId)
-        lastObj.setLocked(true)
-        lastObj.highlightOff(self.playerMoving[player])
+        if MovePhase.objectInMotion == objID then 
+            return
+        end
     end
-    self.objectInMotion = objID
 
-    self.movement = obj:getStat(Stats.M)
-    self.moveIndicator = self.UIAdapter.spawnIndicator(currentLocation, Colors.green, self.movement)
+    MovePhase.objectInMotion = objID
+    MovePhase.startingLocation = obj.getPosition()
 
-    self.advanceMove = self.movement + math.random(6) --TODO: apply modifiers
-    self.advanceIndicator = self.UIAdapter.spawnIndicator(currentLocation, Colors.yellow, self.advanceMove)
+    MovePhase.movement = obj:getStat(Stats.M)
+    MovePhase.moveIndicator = UIAdapter.spawnIndicator(currentLocation, Colors.green, MovePhase.movement)
+
+    MovePhase.advanceMove = MovePhase.movement + math.random(6) + obj:GetModifiers(Events.move)
+    MovePhase.advanceIndicator = UIAdapter.spawnIndicator(currentLocation, Colors.yellow, MovePhase.advanceMove)
 end
 
-function MovePhase:release(player, obj)
-    if Range.distance(self.startingLocation, obj.getPosition()) > self.advanceMove then
-        self.uiAdapter.messagePlayers("You must place the unit within its specified movement or advance range")
+function MovePhase.release(player, obj)
+    if Range.distance(MovePhase.startingLocation, obj.getPosition()) > MovePhase.advanceMove then
+        UIAdapter.messagePlayers("You must place the unit within its specified movement or advance range")
     end
 end
