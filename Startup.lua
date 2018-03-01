@@ -8,6 +8,7 @@ function startGame()
 end
 
 function onObjectPickUp(player, obj)
+    obj.setVar("startingLocation", obj.getPosition())
     if UIAdapter.pickup then
         UIAdapter.pickup(player, obj)
     else

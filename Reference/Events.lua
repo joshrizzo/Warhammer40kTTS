@@ -1,6 +1,7 @@
 Events = {
     movement = {
-        move = "Events.Move"
+        move = "Move",
+        advance = "Advance"
     },
     psyker = {},
     shooting = {},

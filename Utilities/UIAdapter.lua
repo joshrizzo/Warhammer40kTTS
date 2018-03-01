@@ -27,6 +27,13 @@ function UIAdapter.resetAllUnits()
     end
 end
 
+function UIAdapter.clearAllUnits()
+    for obj in getAllObjects() do
+        obj.setLocked(false)
+        obj.highlightOff()
+    end
+end
+
 function UIAdapter.spawnIndicator(location, color, size)
     local rangeIndicator =
         spawnObject(
@@ -52,9 +59,9 @@ function UIAdapter.getPhase()
 end
 
 function UIAdapter.resetObject(objId, highlightOff)
-    local obj = getObjectFromGUID(objId)
-    obj.setLocked(true)
-    if highlightOff then
-        obj.highlightOff()
-    end
+    getObjectFromGUID(objId):resetUnit()
+end
+
+function UIAdapter.getObjectByID(id)
+    return getObjectFromGUID(id)
 end
