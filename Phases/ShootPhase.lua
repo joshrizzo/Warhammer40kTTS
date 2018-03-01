@@ -17,7 +17,7 @@ function ShootPhase.start()
     UIAdapter.enableFriendliesOnly(ShootPhase.unitsFired)
     UIAdapter.messagePlayers("Select a unit to fire with.")
     UIAdapter.pickup = ShootPhase.pickup
-    UIAdapter.release = ShootPhase.release
+    UIAdapter.release = nil -- Release is not needed for non-movement phases.
     UIAdapter.turnStart = ShootPhase.start
     UIAdapter.pickup = ShootPhase.done
 end
@@ -73,8 +73,4 @@ function ShootPhase.unitDone()
         table.insert(ShootPhase.unitsFired, unit:getID())
     end
     ShootPhase.start()
-end
-
-function ShootPhase.release(player, obj)
-    -- Release is not needed for non-movement phases.
 end
