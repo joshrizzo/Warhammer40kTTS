@@ -15,7 +15,7 @@ function ShootPhase.start()
     ShootPhase.weaponsFired = {}
 
     UIAdapter.enableFriendliesOnly(ShootPhase.unitsFired)
-    UIAdapter.messagePlayers('Select a unit to fire with.')
+    UIAdapter.messagePlayers("Select a unit to fire with.")
 end
 
 function ShootPhase.done()
@@ -24,13 +24,13 @@ end
 
 function ShootPhase.pickup(player, obj)
     if Game.players.current ~= player then
-        UIAdapter.messagePlayers('Only the active player may shoot thier units.')
+        UIAdapter.messagePlayers("Only the active player may shoot thier units.")
     end
     obj:release()
 
     if not ShootPhase.selectedUnits then
         ShootPhase.selectedUnits = obj:getSquadMembers()
-        ShootPhase.selectWeapon()
+        --TODO: make buttons to shoot different weapons
     else
         ShootPhase.targetUnit = obj
         ShootPhase.T = obj:getStat(Stats.T)
@@ -45,16 +45,16 @@ function ShootPhase.pickup(player, obj)
                 ShootPhase.range = range
             end
         end
-        
+
         for unit in ShootPhase.selectedUnits do
             unit:applyModifiers(Events.shoot, ShootPhase)
         end
-        
+
         ShootPhase.targetUnit:applyModifiers(Events.shoot, ShootPhase)
         Combat.resolveShooting(ShootPhase)
         ShootPhase.weaponsFired[ShootPhase.weapon.name] = ShootPhase.weapon.count
     end
-    UIAdapter.resetAllUnits();
+    UIAdapter.resetAllUnits()
 end
 
 function ShootPhase.shootWeapon(weapon)
@@ -69,10 +69,6 @@ function ShootPhase.unitDone()
         table.insert(ShootPhase.unitsFired, unit:getID())
     end
     ShootPhase.start()
-end
-
-function ShootPhase.selectWeapon()
-    --TODO: make buttons to shoot different weapons
 end
 
 function ShootPhase.release(player, obj)
