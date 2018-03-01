@@ -1,14 +1,19 @@
-
 function onLoad()
-    UIAdapter.createCustomButton("Start Game", startGame, 1, 1)
+    UIAdapter.createCustomButton('Start Game', 'startGame', 1, 1)
+    --TODO: Draw indicators and skip phase button.
+end
+
+function nextPhase()
+    Phases[UIAdapter.getPhase()].start()
 end
 
 function startGame()
-    Phase[UIAdapter.getPhase()].start()
+    --TODO: Remove this button.
+    nextPhase()
 end
 
 function onObjectPickUp(player, obj)
-    obj.setVar("startingLocation", obj.getPosition())
+    obj.setVar('startingLocation', obj.getPosition())
     if UIAdapter.pickup then
         UIAdapter.pickup(player, obj)
     else

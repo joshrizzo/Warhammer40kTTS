@@ -1,20 +1,27 @@
 MovePhase = {
-    M = nil,
-    movementIndicator = nil,
-    advanceMove = nil,
-    advanceIndicator = nil,
-    objectInMotion = nil,
-    invalidMove = false,
-    squadsMoved = {}
+    unitsMoved = {}
 }
 
 function MovePhase.start()
-    UIAdapter.enableFriendliesOnly()
+    MovePhase.M = nil;
+    MovePhase.movementIndicator = nil;
+    MovePhase.advanceMove = nil;
+    MovePhase.advanceIndicator = nil;
+    MovePhase.objectInMotion = nil;
+    MovePhase.invalidMove = false;
+    MovePhase.squadMoving = nil;
+
+    UIAdapter.enableFriendliesOnly(MovePhase.unitsMoved)
+    UIAdapter.messagePlayers('Select a unit to move.')
+end
+
+function MovePhase.done()
+    MovePhase.unitsMoved = {}
 end
 
 function MovePhase.pickup(player, obj)
     if Game.players.current ~= player then
-        UIAdapter.messagePlayers("Only the active player may move units.")
+        UIAdapter.messagePlayers('Only the active player may move units.')
         obj:release()
         return
     end
@@ -24,7 +31,7 @@ function MovePhase.pickup(player, obj)
         if MovePhase.objectInMotion == objID then
             return
         elseif MovePhase.invalidMove then
-            UIAdapter.messagePlayers("You must place the previous unit in a valid location first.")
+            UIAdapter.messagePlayers('You must place the previous unit in a valid location first.')
             obj:release()
             return
         end
@@ -39,6 +46,11 @@ function MovePhase.pickup(player, obj)
             lastObj:triggerEvent(Events.move)
         end
         lastObj:resetUnit(true)
+    end
+
+    local squad = obj:getSquad()
+    if squad and not MovePhase.squadMoving then
+        MovePhase.squadMoving = UIAdapter.getAndEnableSquadOnly(squad)
     end
 
     MovePhase.objectInMotion = objID
@@ -56,21 +68,37 @@ function MovePhase.pickup(player, obj)
 end
 
 function MovePhase.release(player, obj)
-    if obj:getID() ~= MovePhase.objectInMotion then
+    local objID = obj:getID()
+    if objID ~= MovePhase.objectInMotion then
         obj:release()
-    else
-        if obj:rangeTo(MovePhase.startingLocation) > MovePhase.advanceMove then
-            UIAdapter.messagePlayers("You must place this unit within its specified movement range.")
-        else
-            local squad = obj:getSquad()
-            if squad then
-                if MovePhase.squadsMoved[squad] and not obj:inSquadCoherency() then
-                    UIAdapter.messagePlayers("You must place this unit within squad coherency.")
-                else
-                    table.insert(MovePhase.squadsMoved, squad)
-                end
-            end
-        end
+        return
+    end
+    
+    if obj:rangeTo(MovePhase.startingLocation) > MovePhase.advanceMove then
+        UIAdapter.messagePlayers('You must place this unit within its specified movement range.')
         MovePhase.invalidMove = true
+        return
+    end
+    
+    -- Valid single unit move
+    if not MovePhase.squadMoving then
+        MovePhase.unitsMoved[MovePhase.objectInMotion] = true
+        MovePhase.start()
+        return 
+    end
+    
+    if not obj:inSquadCoherency() then
+        UIAdapter.messagePlayers('You must place this unit within squad coherency.')
+        MovePhase.invalidMove = true
+        return
+    end
+
+    -- Valid squad move
+    MovePhase.unitsMoved[MovePhase.objectInMotion] = true
+    MovePhase.squadMoving[objID] = nil
+    if next(MovePhase.squadMoving) == nil then
+        -- Squad complete
+        MovePhase.squadMoving = nil
+        MovePhase.start()
     end
 end

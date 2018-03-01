@@ -1,10 +1,8 @@
 Events = {
-    movement = {
-        move = "Move",
-        advance = "Advance"
-    },
+    move = 'Move',
+    advance = 'Advance',
     psyker = {},
-    shooting = {},
+    shoot = 'Shoot',
     charge = {},
     fight = {},
     morale = {}

@@ -2,12 +2,12 @@ function Object:getOwner()
     return string.match(self.getDescription(), '[(.+)]')
 end
 
-function Object:isFriendly(player)
-    return self:getOwner() == player
+function Object:isFriendly()
+    return self:getOwner() == Game.players.current
 end
 
 function Object:isEnemy()
-    return not self:isFriendly()
+    return not self:isFriendly(Game.players.current)
 end
 
 function Object:getStat(stat)
@@ -15,12 +15,7 @@ function Object:getStat(stat)
 end
 
 function Object:applyModifiers(event, phase)
-    for mod in string.gfind(self.getDescription(), '/' .. event .. ':(.+);') do
-        local condition = loadstring(mod)
-        setfenv(condition, phase)
-        condition() -- WARNING: SIDE EFFECTS - these scripts should modify the phase variables.
-    end
-    return context
+    return Stats.applyModifiers(event, phase, self.getDescription())
 end
 
 function Object:triggerEvent(event)
@@ -90,12 +85,21 @@ function Object:getClosest()
 end
 
 function Object:inSquadCoherency()
-    local isInCoherency = false
     local squad = self:getSquad()
+    local isInCoherency = not squad
     for obj in self:objectsInRange(2) do
         if obj:getSquad() == squad then
             isInCoherency = true
         end
     end
     return isInCoherency
+end
+
+function Object:getSquadMembers()
+    local squad = self:getSquad()
+    if squad then
+        return UIAdapter.getSquad(squad)
+    else
+        return {[self:getID()] = self}
+    end
 end
