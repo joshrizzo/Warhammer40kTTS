@@ -13,6 +13,10 @@ function MovePhase.start()
 
     UIAdapter.enableFriendliesOnly(MovePhase.unitsMoved)
     UIAdapter.messagePlayers('Select a unit to move.')
+    UIAdapter.pickup = MovePhase.pickup
+    UIAdapter.release = MovePhase.release
+    UIAdapter.turnStart = MovePhase.start
+    UIAdapter.pickup = MovePhase.done
 end
 
 function MovePhase.done()

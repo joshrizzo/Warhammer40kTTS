@@ -16,6 +16,10 @@ function ShootPhase.start()
 
     UIAdapter.enableFriendliesOnly(ShootPhase.unitsFired)
     UIAdapter.messagePlayers("Select a unit to fire with.")
+    UIAdapter.pickup = ShootPhase.pickup
+    UIAdapter.release = ShootPhase.release
+    UIAdapter.turnStart = ShootPhase.start
+    UIAdapter.pickup = ShootPhase.done
 end
 
 function ShootPhase.done()

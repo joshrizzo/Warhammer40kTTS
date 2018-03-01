@@ -1,7 +1,8 @@
 UIAdapter = {
     pickup = nil,
     release = nil,
-    turnStart = nil
+    turnStart = nil,
+    turnEnd = nil
 }
 
 function UIAdapter.messagePlayers(message, color)
@@ -106,16 +107,16 @@ function UIAdapter.getObjectByID(id)
     return getObjectFromGUID(id)
 end
 
-function UIAdapter.createCustomButton (label, functionName, position)
+function UIAdapter.createCustomButton (label, functionName)
     local button = {}
-    button.click_function = sFunctionName
-    button.label = sLabel
+    button.click_function = functionName
+    button.label = label
     button.function_owner = self
     button.position = tPosition
-    button.rotation = {0, 0, 0}
-    button.width = 900
-    button.height = 400
-    button.font_size = 200
+    -- button.rotation = {0, 0, 0}
+    -- button.width = 900
+    -- button.height = 400
+    -- button.font_size = 200
 
     oParent.createButton(button)
 end
