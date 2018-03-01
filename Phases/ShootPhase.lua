@@ -61,7 +61,7 @@ function ShootPhase.shootWeapon(weapon)
     ShootPhase.weapon = weapon
     Stats.applyModifiers(Events.shoot, ShootPhase, ShootPhase.weapon.mods)
     ShootPhase.rangeIndicator = UIAdapter.spawnIndicator(obj:getLocation(), Colors.green, ShootPhase.weapon.range)
-    UIAdapter.enableEnemiesInRange(obj:getLocation(), ShootPhase.weapon.range)
+    UIAdapter.enableEnemiesInRange(obj:getLocation(), ShootPhase.weapon.range) --TODO: replace obj:getLocation() with the location of the CLOSEST squad member.
 end
 
 function ShootPhase.unitDone()
