@@ -3,6 +3,7 @@ Events = {
     advance = 'Advance',
     psyker = {},
     shoot = 'Shoot',
+    shotAt = 'ShotAt',
     charge = {},
     fight = {},
     morale = {}

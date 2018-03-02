@@ -1,15 +1,11 @@
 function onLoad()
-    UIAdapter.createCustomButton('Start Game', 'startGame', 1, 1)
-    --TODO: Draw indicators and skip phase button.
+    self:createCustomButton('Start Game', self, 'startGame')
 end
 
-function nextPhase()
-    Phases[UIAdapter.getPhase()].start()
-end
-
-function startGame()
-    --TODO: Remove this button.
-    nextPhase()
+function startGame(button, player)
+    button.destruct()
+    self:createCustomButton('Next Phase', Game, 'nextPhase')
+    Game.nextPhase()
 end
 
 function onObjectPickUp(player, obj)
@@ -17,7 +13,7 @@ function onObjectPickUp(player, obj)
     if UIAdapter.pickup then
         UIAdapter.pickup(player, obj)
     else
-        UIAdapter.releaseObject(obj)
+        obj:release()
     end
 end
 
@@ -25,15 +21,11 @@ function onObjectDrop(player, obj)
     if UIAdapter.release then
         UIAdapter.release(player, obj)
     else
-        UIAdapter.releaseObject(obj)
+        obj:release()
     end
 end
 
 function onPlayerTurnStart(startingPlayer, previousPlayer)
-    Game.players = {
-        starting = Game.players.starting or startingPlayer,
-        current = startingPlayer
-    }
     if UIAdapter.turnStart then
         UIAdapter.turnStart()
     end        

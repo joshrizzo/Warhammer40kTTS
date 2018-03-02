@@ -1,12 +1,17 @@
 UIAdapter = {
     pickup = nil,
     release = nil,
-    turnStart = nil,
-    turnEnd = nil
+    turnStart = nil
 }
 
 function UIAdapter.messagePlayers(message, color)
     broadcastToAll(message, color)
+end
+
+function UIAdapter.log(event, message)
+    log(message)
+    Game.logEvent()
+    UIAdapter.messagePlayers(message)
 end
 
 function UIAdapter.enableFriendliesOnly(exceptTheseIDs)
@@ -22,10 +27,16 @@ function UIAdapter.enableFriendliesOnly(exceptTheseIDs)
     end
 end
 
-function UIAdapter.enableEnemiesInRange(location, range)
+function UIAdapter.enableEnemiesInRange(units, range)
     for obj in getAllObjects() do
-        local isInRange = obj:isEnemy() and obj:rangeTo(location) <= range
-        obj.setLocked(isInRange)
+        local isInRange = false
+        for unit in units do
+            if obj:isEnemy() and obj:rangeTo(unit:getLocation()) <= range then
+                isInRange = true
+                break
+            end
+        end
+        obj.setLocked(not isInRange)
 
         if isInRange then
             obj.highlightOn(Colors.red)
@@ -39,7 +50,7 @@ function UIAdapter.getAndEnableSquadOnly(squad)
     local units = {}
     for obj in getAllObjects() do
         local inSquad = obj:getSquad() == squad and obj:isFriendly()
-        obj.setLocked(inSquad)
+        obj.setLocked(not inSquad)
 
         if inSquad then
             units[obj:getID()] = obj
@@ -51,10 +62,13 @@ function UIAdapter.getAndEnableSquadOnly(squad)
     return units
 end
 
-function UIAdapter.getSquad(squad)
+function UIAdapter.getSquad(squad, highlightOn)
     local units = {}
     for obj in getAllObjects() do
         if obj:getSquad() == squad then
+            if highlightOn then
+                obj.highlightOn(Colors.green)
+            end
             units[obj:getID()] = obj
         end
     end
@@ -95,10 +109,6 @@ function UIAdapter.spawnIndicator(location, color, size)
     return rangeIndicator
 end
 
-function UIAdapter.getPhase()
-    return getObjectFromGUID(phaseIndicator).getValue()
-end
-
 function UIAdapter.resetObject(objId, highlightOff)
     getObjectFromGUID(objId):resetUnit()
 end
@@ -107,16 +117,12 @@ function UIAdapter.getObjectByID(id)
     return getObjectFromGUID(id)
 end
 
-function UIAdapter.createCustomButton (label, functionName)
-    local button = {}
-    button.click_function = functionName
-    button.label = label
-    button.function_owner = self
-    button.position = tPosition
-    -- button.rotation = {0, 0, 0}
-    -- button.width = 900
-    -- button.height = 400
-    -- button.font_size = 200
-
-    oParent.createButton(button)
+function UIAdapter.getShootingWeapons(units)
+    local weapons = {}
+    for unit in Units do
+        for weapon in unit:getShootingWeapons() do
+            weapons[weapon.name] = weapon
+        end
+    end
+    return weapons
 end

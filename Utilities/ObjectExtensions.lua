@@ -1,5 +1,9 @@
 function Object:getOwner()
-    return string.match(self.getDescription(), '[(.+)]')
+    return string.match(self.getDescription(), "[(.+)]")
+end
+
+function Object:getName()
+    return self.name
 end
 
 function Object:isFriendly()
@@ -11,7 +15,7 @@ function Object:isEnemy()
 end
 
 function Object:getStat(stat)
-    return tonumber(string.match(self.description, stat .. '(%d+)%s'))
+    return tonumber(string.match(self.description, stat .. "(%d+)%s"))
 end
 
 function Object:applyModifiers(event, phase)
@@ -19,7 +23,7 @@ function Object:applyModifiers(event, phase)
 end
 
 function Object:triggerEvent(event)
-    for event in string.gfind(self.getDescription(), '\\' .. event .. ':(.+);') do
+    for event in string.gfind(self.getDescription(), "\\" .. event .. ":(.+);") do
         loadstring(event)()
     end
 end
@@ -51,15 +55,18 @@ function Object:getLocation()
 end
 
 function Object:getSquad()
-    return string.match(self.getDescription(), 'Squad\((.+)\)')
+    return string.match(self.getDescription(), "Squad[(](.+)[)]")
 end
 
 function Object:objectsInRange(size)
-    local hits = Physics.cast({
-        origin = self.getLocation(),
-        type = 2, -- Sphere
-        size = size * InchesToPoints
-    })
+    local hits =
+        Physics.cast(
+        {
+            origin = self.getLocation(),
+            type = 2, -- Sphere
+            size = size * InchesToPoints
+        }
+    )
 
     local objs = {}
     for hit in hits do
@@ -69,11 +76,14 @@ function Object:objectsInRange(size)
 end
 
 function Object:getClosest()
-    local hits = Physics.cast({
-        origin = self.getLocation(),
-        type = 2, -- Sphere
-        size = 60 * InchesToPoints
-    })
+    local hits =
+        Physics.cast(
+        {
+            origin = self.getLocation(),
+            type = 2, -- Sphere
+            size = 60 * InchesToPoints
+        }
+    )
 
     local closest = hits[0]
     for hit in hits do
@@ -95,11 +105,34 @@ function Object:inSquadCoherency()
     return isInCoherency
 end
 
-function Object:getSquadMembers()
+function Object:getSquadMembers(highlightOn)
     local squad = self:getSquad()
     if squad then
-        return UIAdapter.getSquad(squad)
+        return UIAdapter.getSquad(squad, highlightOn)
     else
         return {[self:getID()] = self}
     end
+end
+
+function Object:createCustomButton(label, funcOwner, funcName, funcParams)
+    local position = #(self.getButtons())
+    self.createButton({
+        rotation = {0, 0, 0},
+        width = 900,
+        height = 400,
+        font_size = 200,
+        function_owner = funcOwner,
+        click_function = funcName,
+        function_params = funcParams,
+        label = label,
+        position = {0, 1, position}
+    })
+end
+
+function Object:clearControls()
+    self.clearButtons()
+end
+
+function Object:getShootingWeapons()
+    -- TODO: parse out weapons
 end
