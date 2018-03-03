@@ -1,30 +1,31 @@
 MovePhase = {}
 
-function MovePhase.start()
-    MovePhase.reset()
-    MovePhase.unitsMoved = {}
+function MovePhase:start()
+    self:reset()
+    self.unitsMoved = {}
+    self.nextPhase = ShootPhase
 
     UIAdapter.messagePlayers("Select a unit to move.")
-    UIAdapter.pickup = MovePhase.pickup
-    UIAdapter.release = MovePhase.release
+
+    return setmetatable({}, {__index = MovePhase})
 end
 
-function MovePhase.reset()
-    MovePhase.M = nil
-    MovePhase.squadCoherency = 2
-    MovePhase.movementIndicator = nil
-    MovePhase.advanceMove = nil
-    MovePhase.advanceIndicator = nil
-    MovePhase.objectInMotion = nil
-    MovePhase.invalidMove = false
-    MovePhase.squadMoving = nil
-    MovePhase.squadCoherencyIndicators = {}
+function MovePhase:reset()
+    self.M = nil
+    self.squadCoherency = 2
+    self.movementIndicator = nil
+    self.advanceMove = nil
+    self.advanceIndicator = nil
+    self.objectInMotion = nil
+    self.invalidMove = false
+    self.squadMoving = nil
+    self.squadCoherencyIndicators = {}
 
-    UIAdapter.enableFriendliesOnly(MovePhase.unitsMoved)
+    UIAdapter.enableFriendliesOnly(self.unitsMoved)
 end
 
 -- Setup the selected unit for a movement, and cleanup the last unit moved, if needed.
-function MovePhase.pickup(player, obj)
+function MovePhase:pickup(player, obj)
     -- Only active player can move
     if Game.players.current ~= player then
         UIAdapter.messagePlayers("Only the active player may move units.")
@@ -33,92 +34,92 @@ function MovePhase.pickup(player, obj)
     end
 
     -- The last move was invalid for some reason.
-    if MovePhase.invalidMove then
+    if self.invalidMove then
         UIAdapter.messagePlayers("You must place the previous unit in a valid location first.")
         obj:release()
         return
     end
 
     -- Cleanup the last unit, if needed.
-    if MovePhase.objectInMotion and MovePhase.objectInMotion ~= obj:getID() then
-        MovePhase.cleanupLastObj()
+    if self.objectInMotion and self.objectInMotion ~= obj:getID() then
+        self:cleanupLastObj()
     end
 
-    MovePhase.setupObj(obj)
+    self:setupObj(obj)
 end
 
 -- Check that the move was valid.
-function MovePhase.release(player, obj)
+function MovePhase:release(player, obj)
     -- Not in movement range.
-    if obj:rangeTo(MovePhase.startingLocation) > MovePhase.advanceMove then
+    if obj:rangeTo(self.startingLocation) > self.advanceMove then
         UIAdapter.messagePlayers("You must place this unit within its specified movement range.")
-        MovePhase.invalidMove = true
+        self.invalidMove = true
         return
     end
 
     -- Not in squad coherency.
-    if MovePhase.squadMoving and not obj:inSquadCoherency() then
+    if self.squadMoving and not obj:inSquadCoherency() then
         UIAdapter.messagePlayers("You must place this unit within squad coherency.")
-        MovePhase.invalidMove = true
+        self.invalidMove = true
         return
     end
 end
 
-function MovePhase.cleanupLastObj()
+function MovePhase:cleanupLastObj()
     -- Clean up indicators.
-    MovePhase.moveIndicator.destruct()
-    MovePhase.advanceIndicator.destruct()
+    self.moveIndicator.destruct()
+    self.advanceIndicator.destruct()
 
     -- Trigger unit events.
-    local lastObj = UIAdapter.getObjectByID(MovePhase.objectInMotion)
-    local moveRange = lastObj:rangeTo(MovePhase.startingLocation)
-    local advanceMove = moveRange > MovePhase.M
+    local lastObj = UIAdapter.getObjectByID(self.objectInMotion)
+    local moveRange = lastObj:rangeTo(self.startingLocation)
+    local advanceMove = moveRange > self.M
     lastObj:triggerEvent(advanceMove and Events.advance or Events.move)
-    MovePhase.unitsMoved[MovePhase.objectInMotion] = true
+    self.unitsMoved[self.objectInMotion] = true
 
     -- Squad cleanup.
-    if MovePhase.squadMoving then
-        MovePhase.squadMoving[MovePhase.objectInMotion] = nil
+    if self.squadMoving then
+        self.squadMoving[self.objectInMotion] = nil
 
         -- Squad still has members.
-        if next(MovePhase.squadMoving) ~= nil then
+        if next(self.squadMoving) ~= nil then
             table.insert(
-                MovePhase.squadCoherencyIndicators,
-                UIAdapter.spawnIndicator(currentLocation, Colors.green, MovePhase.squadCoherency)
+                self.squadCoherencyIndicators,
+                UIAdapter.spawnIndicator(currentLocation, Colors.green, self.squadCoherency)
             )
             return
         end
 
         -- Squad done moving.
-        for indicator in MovePhase.squadCoherencyIndicators do
+        for indicator in self.squadCoherencyIndicators do
             indicator.destruct()
         end
     end
 
-    UIAdapter.log(Events.move, lastObj:getName() .. (advanceMove and " advanced " or " moved ") .. moveRange .. " inches.")
-    MovePhase.reset()
+    Game.log(Events.move, lastObj:getName() .. (advanceMove and " advanced " or " moved ") .. moveRange .. " inches.")
+    self:reset()
 end
 
-function MovePhase.setupObj(obj)
+function MovePhase:setupObj(obj)
     -- Squad setup.
     local squad = obj:getSquad()
-    if squad and not MovePhase.squadMoving then
-        MovePhase.squadMoving = UIAdapter.getAndEnableSquadOnly(squad)
+    if squad and not self.squadMoving then
+        self.squadMoving = UIAdapter.getAndEnableSquadOnly(squad)
     end
 
     -- Moving object setup.
-    MovePhase.objectInMotion = obj:getID()
-    MovePhase.startingLocation = obj:getLocation()
-    MovePhase.invalidMove = false
+    self.objectInMotion = obj:getID()
+    self.startingLocation = obj:getLocation()
+    self.invalidMove = false
 
     -- Stat with modifiers.
-    MovePhase.M = obj:getStat(Stats.M)
-    MovePhase.d6 = math.random(6)
-    obj:applyModifiers(Events.move, MovePhase)
-    obj:applyModifiers(Events.advance, MovePhase)
-    MovePhase.advanceMove = MovePhase.M + MovePhase.d6
+    self.M = obj:getStat(Stats.M)
+    self.d6 = math.random(6)
+    obj:applyModifiers(Events.move, self)
+    obj:applyModifiers(Events.advance, self)
+    self.advanceMove = self.M + self.d6
 
     -- Movement indicators.
-    MovePhase.moveIndicator = UIAdapter.spawnIndicator(currentLocation, Colors.green, MovePhase.M)
-    MovePhase.advanceIndicator = UIAdapter.spawnIndicator(currentLocation, Colors.yellow, MovePhase.advanceMove)
+    self.moveIndicator = UIAdapter.spawnIndicator(currentLocation, Colors.green, self.M)
+    self.advanceIndicator = UIAdapter.spawnIndicator(currentLocation, Colors.yellow, self.advanceMove)
 end

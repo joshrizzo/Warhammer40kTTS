@@ -115,7 +115,7 @@ function Object:getSquadMembers(highlightOn)
 end
 
 function Object:createCustomButton(label, funcOwner, funcName, funcParams)
-    local position = #(self.getButtons())
+    local position = self.getButtons()
     self.createButton({
         rotation = {0, 0, 0},
         width = 900,
@@ -125,7 +125,7 @@ function Object:createCustomButton(label, funcOwner, funcName, funcParams)
         click_function = funcName,
         function_params = funcParams,
         label = label,
-        position = {0, 1, position}
+        position = {0, 1, #position}
     })
 end
 

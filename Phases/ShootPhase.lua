@@ -1,30 +1,30 @@
 ShootPhase = {}
 
-function ShootPhase.start()
-    ShootPhase.unitsFired = {}
-    ShootPhase.reset()
+function ShootPhase:start()
+    self.unitsFired = {}
+    self.nextPhase = EndPhase
+    self.reset()
 
-    UIAdapter.pickup = ShootPhase.pickup
-    UIAdapter.release = nil -- Release is not needed for non-movement phases.
+    return setmetatable({}, {__index = ShootPhase})
 end
 
-function ShootPhase.reset()
-    ShootPhase.range = nil
-    ShootPhase.T = nil
-    ShootPhase.SV = nil
-    ShootPhase.IS = nil
-    ShootPhase.IW = nil
-    ShootPhase.weapon = nil
-    ShootPhase.selectedUnits = nil
-    ShootPhase.selectedModel = nil
-    ShootPhase.targetUnit = nil
-    ShootPhase.weaponsFired = {}
+function ShootPhase:reset()
+    self.range = nil
+    self.T = nil
+    self.SV = nil
+    self.IS = nil
+    self.IW = nil
+    self.weapon = nil
+    self.selectedUnits = nil
+    self.selectedModel = nil
+    self.targetUnit = nil
+    self.weaponsFired = {}
 
-    UIAdapter.enableFriendliesOnly(ShootPhase.unitsFired)
+    UIAdapter.enableFriendliesOnly(self.unitsFired)
     UIAdapter.messagePlayers("Select a unit to fire with.")
 end
 
-function ShootPhase.pickup(player, obj)
+function ShootPhase:pickup(player, obj)
     -- Only the active player can shoot.
     if Game.players.current ~= player then
         UIAdapter.messagePlayers("Only the active player may shoot thier units.")
@@ -34,61 +34,61 @@ function ShootPhase.pickup(player, obj)
     obj:release()
 
     -- Player has selected a FRIENDLY unit to shoot WITH.
-    if not ShootPhase.selectedUnits then
-        ShootPhase.shooterSelected(obj)
+    if not self.selectedUnits then
+        self:shooterSelected(obj)
     else -- Player has selected an ENEMY unit to shoot AT.
-        ShootPhase.targetSelected(obj)
+        self:targetSelected(obj)
     end
 end
 
-function ShootPhase.shooterSelected(obj)
+function ShootPhase:shooterSelected(obj)
     UIAdapter.resetAllUnits()
-    ShootPhase.selectedUnits = obj:getSquadMembers(true)
-    ShootPhase.selectedModel = obj
+    self.selectedUnits = obj:getSquadMembers(true)
+    self.selectedModel = obj
 
-    local weapons = UIAdapter.getShootingWeapons(ShootPhase.selectedUnits)
+    local weapons = UIAdapter.getShootingWeapons(self.selectedUnits)
     for weapon in weapons do
-        ShootPhase.selectedModel:createCustomButton(weapon.name, self, 'shootWeapon', weapon)
+        self.selectedModel:createCustomButton(weapon.name, self, 'shootWeapon', weapon)
     end
-    ShootPhase.selectedModel:createCustomButton('Unit Done', self, 'unitDone')
+    self.selectedModel:createCustomButton('Unit Done', self, 'unitDone')
 end
 
-function ShootPhase.shootWeapon(button)
-    ShootPhase.weapon = button.function_params.weapon
-    UIAdapter.enableEnemiesInRange(ShootPhase.selectedUnits, ShootPhase.weapon.range)
+function ShootPhase:shootWeapon(button)
+    self.weapon = button.function_params.weapon
+    UIAdapter.enableEnemiesInRange(self.selectedUnits, self.weapon.range)
     UIAdapter.messagePlayers('Select a target unit.')
 end
 
-function ShootPhase.unitDone()
-    for unit in ShootPhase.selectedUnits do
-        ShootPhase.unitsFired[unit:getID()] = true
+function ShootPhase:unitDone()
+    for unit in self.selectedUnits do
+        self.unitsFired[unit:getID()] = true
     end
-    ShootPhase.reset()
-    ShootPhase.selectedModel:clearControls()
+    self:reset()
+    self.selectedModel:clearControls()
 end
 
-function ShootPhase.targetSelected(obj)
+function ShootPhase:targetSelected(obj)
     -- Target unit stats.
-    ShootPhase.targetUnit = obj
-    ShootPhase.T = obj:getStat(Stats.T)
-    ShootPhase.SV = obj:getStat(Stats.SV)
-    ShootPhase.IS = obj:getStat(Stats.IS)
-    ShootPhase.IW = obj:getStat(Stats.IW)
+    self.targetUnit = obj
+    self.T = obj:getStat(Stats.T)
+    self.SV = obj:getStat(Stats.SV)
+    self.IS = obj:getStat(Stats.IS)
+    self.IW = obj:getStat(Stats.IW)
 
     -- Calculate closest range between units
-    for unit in ShootPhase.selectedUnits do
+    for unit in self.selectedUnits do
         local range = unit:rangeTo(obj)
-        if not ShootPhase.range then
-            ShootPhase.range = range
-        elseif range < ShootPhase.range then
-            ShootPhase.range = range
+        if not self.range then
+            self.range = range
+        elseif range < self.range then
+            self.range = range
         end
     end
 
     -- Modifiers.
     local unitString = nil
-    for unit in ShootPhase.selectedUnits do
-        unit:applyModifiers(Events.shoot, ShootPhase) -- Triggering the shoot event, since we are already in the loop.
+    for unit in self.selectedUnits do
+        unit:applyModifiers(Events.shoot, self) -- Triggering the shoot event, since we are already in the loop.
         unit:triggerEvent(Events.shoot)
         local unitName = unit:getName()
         if not unitString then
@@ -97,15 +97,15 @@ function ShootPhase.targetSelected(obj)
             unitString = unitString .. ', ' .. unitName
         end
     end
-    ShootPhase.targetUnit:applyModifiers(Events.shoot, ShootPhase)
-    Stats.applyModifiers(Events.shoot, ShootPhase, ShootPhase.weapon.mods)
+    self.targetUnit:applyModifiers(Events.shoot, self)
+    Stats.applyModifiers(Events.shoot, self, self.weapon.mods)
 
     -- Resolve damage.
-    UIAdapter.log(Events.shoot, unitString .. ' shot at ' .. ShootPhase.targetUnit:getName() .. '.', true)
-    Combat.resolveShooting(ShootPhase) -- Call after main log message so the combat output displays after.
-    ShootPhase.weaponsFired[ShootPhase.weapon.name] = ShootPhase.weapon.count
-    ShootPhase.targetUnit:triggerEvent(Events.shotAt) -- Trigger this AFTER the unit has recieved damage.
+    Game.log(Events.shoot, unitString .. ' shot at ' .. self.targetUnit:getName() .. '.', true)
+    Combat.resolveShooting(self) -- Call after main log message so the combat output displays after.
+    self.weaponsFired[self.weapon.name] = self.weapon.count
+    self.targetUnit:triggerEvent(Events.shotAt) -- Trigger this AFTER the unit has recieved damage.
 
     -- Loop back to selecting a weapon, until they click the "Unit Done" button.
-    ShootPhase.shooterSelected(ShootPhase.selectedModel)
+    self:shooterSelected(self.selectedModel)
 end

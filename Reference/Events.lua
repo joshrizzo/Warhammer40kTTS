@@ -6,5 +6,6 @@ Events = {
     shotAt = 'ShotAt',
     charge = {},
     fight = {},
-    morale = {}
+    morale = {},
+    start = "TurnStart"
 }

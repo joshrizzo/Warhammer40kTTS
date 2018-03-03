@@ -8,10 +8,11 @@ function UIAdapter.messagePlayers(message, color)
     broadcastToAll(message, color)
 end
 
-function UIAdapter.log(event, message)
+function UIAdapter.log(message, messagePlayers)
     log(message)
-    Game.logEvent()
-    UIAdapter.messagePlayers(message)
+    if messagePlayers then
+        UIAdapter.messagePlayers(message)
+    end
 end
 
 function UIAdapter.enableFriendliesOnly(exceptTheseIDs)
