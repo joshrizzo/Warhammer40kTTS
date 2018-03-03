@@ -7,5 +7,6 @@ Events = {
     charge = {},
     fight = {},
     morale = {},
-    start = "TurnStart"
+    start = 'TurnStart',
+    ending = 'TurnEnd'
 }

@@ -1,11 +1,9 @@
-UIAdapter = {
-    pickup = nil,
-    release = nil,
-    turnStart = nil
-}
-
 function UIAdapter.messagePlayers(message, color)
     broadcastToAll(message, color)
+end
+
+function UIAdapter.getPlayerName(player)
+    return Player[player].steam_name
 end
 
 function UIAdapter.log(message, messagePlayers)
@@ -18,7 +16,7 @@ end
 function UIAdapter.enableFriendliesOnly(exceptTheseIDs)
     for obj in getAllObjects() do
         local enabled = obj:isFriendly() and not exceptTheseIDs[obj:getID()]
-        obj.setLocked(not enabled)
+        obj.interactable = not enabled
 
         if enabled then
             obj.highlightOn(Colors.green)
@@ -37,7 +35,7 @@ function UIAdapter.enableEnemiesInRange(units, range)
                 break
             end
         end
-        obj.setLocked(not isInRange)
+        obj.interactable = not isInRange
 
         if isInRange then
             obj.highlightOn(Colors.red)
@@ -51,7 +49,7 @@ function UIAdapter.getAndEnableSquadOnly(squad)
     local units = {}
     for obj in getAllObjects() do
         local inSquad = obj:getSquad() == squad and obj:isFriendly()
-        obj.setLocked(not inSquad)
+        obj.interactable = not inSquad
 
         if inSquad then
             units[obj:getID()] = obj
@@ -78,14 +76,14 @@ end
 
 function UIAdapter.resetAllUnits()
     for obj in getAllObjects() do
-        obj.setLocked(true)
+        obj.interactable = true
         obj.highlightOff()
     end
 end
 
 function UIAdapter.clearAllUnits()
     for obj in getAllObjects() do
-        obj.setLocked(false)
+        obj.interactable = false
         obj.highlightOff()
     end
 end

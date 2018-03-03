@@ -39,7 +39,7 @@ function Object:release()
 end
 
 function Object:resetUnit(highlightOff)
-    self.setLocked(true)
+    self.interactable = true
     if highlightOff then
         self.highlightOff()
     end

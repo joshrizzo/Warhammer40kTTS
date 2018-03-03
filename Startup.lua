@@ -1,3 +1,8 @@
+function onLoad()
+    UIAdapter.messagePlayers('Please setup the turn order and enable turns in the gmae\'s menu.')
+    UIAdapter.messagePlayers('If turns are already enabled, open turn options and click Reset.')
+end
+
 function onObjectPickUp(player, obj)
     obj.setVar("startingLocation", obj.getPosition())
     if Game.phase.pickup then
