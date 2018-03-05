@@ -1,3 +1,5 @@
+--TODO: Refactor into Unit class and parse from description on creation.
+
 function Object:getOwner()
     return string.match(self.getDescription(), "[(.+)]")
 end
@@ -108,7 +110,7 @@ end
 function Object:getSquadMembers(highlightOn)
     local squad = self:getSquad()
     if squad then
-        return UIAdapter.getSquad(squad, highlightOn)
+        return UnitManager.getSquad(squad, highlightOn)
     else
         return {[self:getID()] = self}
     end
@@ -116,17 +118,19 @@ end
 
 function Object:createCustomButton(label, funcOwner, funcName, funcParams)
     local position = self.getButtons()
-    self.createButton({
-        rotation = {0, 0, 0},
-        width = 900,
-        height = 400,
-        font_size = 200,
-        function_owner = funcOwner,
-        click_function = funcName,
-        function_params = funcParams,
-        label = label,
-        position = {0, 1, #position}
-    })
+    self.createButton(
+        {
+            rotation = {0, 0, 0},
+            width = 900,
+            height = 400,
+            font_size = 200,
+            function_owner = funcOwner,
+            click_function = funcName,
+            function_params = funcParams,
+            label = label,
+            position = {0, 1, #position}
+        }
+    )
 end
 
 function Object:clearControls()

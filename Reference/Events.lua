@@ -1,12 +1,17 @@
 Events = {
     move = 'Move',
     advance = 'Advance',
+    fallback = 'Fallback',
     psyker = {},
-    shoot = 'Shoot',
-    shotAt = 'ShotAt',
+    shoot = {
+        shooting = 'Shooting',
+        shotAt = 'ShotAt'
+    },
     charge = {},
     fight = {},
     morale = {},
-    start = 'TurnStart',
-    ending = 'TurnEnd'
+    damage = {
+        wounded = "Wounded",
+        causedWounds = "CausedWounds"
+    }
 }

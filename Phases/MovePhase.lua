@@ -1,5 +1,6 @@
 MovePhase = {}
 
+--TODO: Build in fallback.
 function MovePhase:start()
     self:reset()
     self.unitsMoved = {}
@@ -21,7 +22,7 @@ function MovePhase:reset()
     self.squadMoving = nil
     self.squadCoherencyIndicators = {}
 
-    UIAdapter.enableFriendliesOnly(self.unitsMoved)
+    UnitManager.enableFriendliesOnly(self.unitsMoved)
 end
 
 -- Setup the selected unit for a movement, and cleanup the last unit moved, if needed.
@@ -71,7 +72,7 @@ function MovePhase:cleanupLastObj()
     self.advanceIndicator.destruct()
 
     -- Trigger unit events.
-    local lastObj = UIAdapter.getObjectByID(self.objectInMotion)
+    local lastObj = UnitManager.getObjectByID(self.objectInMotion)
     local moveRange = lastObj:rangeTo(self.startingLocation)
     local advanceMove = moveRange > self.M
     lastObj:triggerEvent(advanceMove and Events.advance or Events.move)
@@ -104,7 +105,7 @@ function MovePhase:setupObj(obj)
     -- Squad setup.
     local squad = obj:getSquad()
     if squad and not self.squadMoving then
-        self.squadMoving = UIAdapter.getAndEnableSquadOnly(squad)
+        self.squadMoving = UnitManager.getAndEnableSquadOnly(squad)
     end
 
     -- Moving object setup.
@@ -114,7 +115,7 @@ function MovePhase:setupObj(obj)
 
     -- Stat with modifiers.
     self.M = obj:getStat(Stats.M)
-    self.d6 = math.random(6)
+    self.d6 = Combat.rollD6()
     obj:applyModifiers(Events.move, self)
     obj:applyModifiers(Events.advance, self)
     self.advanceMove = self.M + self.d6
