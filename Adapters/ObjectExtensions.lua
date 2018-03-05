@@ -1,3 +1,24 @@
+Unit = {}
+
+function Unit:adaptFrom(obj)
+    -- Pull the Unit from the cache on obj, if it exists.
+    local existing = obj.getTable("Unit")
+    if existing then
+        return existing
+    end
+
+    local new = setmetatable({}, {__index = Unit})
+    new.object = obj
+
+    local desc = obj.getDescription()
+    for rule in desc:match("[,:]%s([^,:]+)") do
+        SpecialRules[rule](new)
+    end
+
+    obj.setTable("Unit", new) -- Save on the object for caching.
+    return new
+end
+
 --TODO: Refactor into Unit class and parse from description on creation.
 
 function Object:getOwner()
@@ -14,10 +35,6 @@ end
 
 function Object:isEnemy()
     return not self:isFriendly(Game.players.current)
-end
-
-function Object:getStat(stat)
-    return tonumber(string.match(self.description, stat .. "(%d+)%s"))
 end
 
 function Object:applyModifiers(event, phase)
