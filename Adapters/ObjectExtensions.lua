@@ -1,87 +1,72 @@
-Unit = {}
+Unit = {
+    patterns = {
+        name = "%[(.+)%]%s*(.+)%s*(%d)/%d",
+        description = "[,:]?%s?([^,:]+)[,:\n]?"
+    }
+}
 
 function Unit:adaptFrom(obj)
     -- Pull the Unit from the cache on obj, if it exists.
     local existing = obj.getTable("Unit")
-    if existing then
-        return existing
-    end
+    if existing then return existing end
 
     local new = setmetatable({}, {__index = Unit})
     new.object = obj
 
+    new.mods = {}
     local desc = obj.getDescription()
-    for rule in desc:match("[,:]%s([^,:]+)") do
+    for rule in desc:match(self.patterns.description) do
         SpecialRules[rule](new)
     end
+
+    local nameMatches = string.match(self.object.getName(), self.patterns.name)
+    new.owner = nameMatches[0]
+    new.name = nameMatches[1]
+    new.remainingW = nameMatches[2]
 
     obj.setTable("Unit", new) -- Save on the object for caching.
     return new
 end
 
---TODO: Refactor into Unit class and parse from description on creation.
-
-function Object:getOwner()
-    return string.match(self.getDescription(), "[(.+)]")
+function Unit:isFriendly()
+    return self.owner == Game.players.current
 end
 
-function Object:getName()
-    return self.name
+function Unit:isEnemy()
+    return not self:isFriendly()
 end
 
-function Object:isFriendly()
-    return self:getOwner() == Game.players.current
-end
-
-function Object:isEnemy()
-    return not self:isFriendly(Game.players.current)
-end
-
-function Object:applyModifiers(event, phase)
-    return Stats.applyModifiers(event, phase, self.getDescription())
-end
-
-function Object:triggerEvent(event)
-    for event in string.gfind(self.getDescription(), "\\" .. event .. ":(.+);") do
-        loadstring(event)()
-    end
-end
-
-function Object:rangeTo(vector)
-    local v1 = self.getPosition()
+function Unit:rangeTo(vector)
+    local v1 = self.object.getPosition()
     local v2 = vector
     return math.abs(math.sqrt((((v2.x - v1.x) ^ 2) + ((v2.y - v1.y) ^ 2) + ((v2.z - v1.z) ^ 2))))
 end
 
-function Object:release()
-    self.setLocation(self.getVar("startingLocation") or self.getLocation())
+function Unit:release()
+    self.object.setLocation(self.object.getVar("startingLocation") or self.object.getLocation())
 end
 
-function Object:resetUnit(highlightOff)
-    self.interactable = true
+function Unit:resetUnit(highlightOff)
+    self.object.interactable = true
     if highlightOff then
-        self.highlightOff()
+        self.object.highlightOff()
     end
     self:release()
 end
 
-function Object:getID()
-    return self.guid
+function Unit:getID()
+    return self.object.guid
 end
 
-function Object:getLocation()
-    return self.getPosition()
+function Unit:getLocation()
+    return self.object.getPosition()
 end
 
-function Object:getSquad()
-    return string.match(self.getDescription(), "Squad[(](.+)[)]")
-end
-
-function Object:objectsInRange(size)
+function Unit:objectsInRange(size)
     local hits =
         Physics.cast(
         {
-            origin = self.getLocation(),
+            origin = self.object.getLocation(),
             type = 2, -- Sphere
             size = size * InchesToPoints
         }
@@ -94,11 +79,11 @@ function Object:objectsInRange(size)
     return objs
 end
 
-function Object:getClosest()
+function Unit:getClosest()
     local hits =
         Physics.cast(
         {
-            origin = self.getLocation(),
+            origin = self.object.getLocation(),
             type = 2, -- Sphere
             size = 60 * InchesToPoints
         }
@@ -111,6 +96,22 @@ function Object:getClosest()
         end
     end
     return closest.hit_object
+end
+
+function Unit:applyModifiers(event, phase)
+    return Stats.applyModifiers(event, phase, self.getDescription())
+end
+
+function Object:triggerEvent(event)
+    for event in string.gfind(self.getDescription(), "\\" .. event .. ":(.+);") do
+        loadstring(event)()
+    end
+end
+
+--TODO: Refactor into Unit class and parse from description on creation.
+
+function Object:getSquad()
+    return string.match(self.getDescription(), "Squad[(](.+)[)]")
 end
 
 function Object:inSquadCoherency()
