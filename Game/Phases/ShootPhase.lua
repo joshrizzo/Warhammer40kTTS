@@ -12,8 +12,7 @@ end
 function ShootPhase:reset()
     self.range = nil
     self.weapon = nil
-    self.selectedUnits = nil
-    self.selectedModel = nil
+    self.selectedUnit = nil
     self.targetUnit = nil
     self.weaponsFired = {}
 
@@ -22,37 +21,35 @@ function ShootPhase:reset()
 end
 
 function ShootPhase:pickup(player, obj)
+    local unit = Unit.adaptFrom(obj)
+    if not unit then return end
+
     -- Only the active player can shoot.
     if Game.players.current ~= player then
         UIAdapter.messagePlayers("Only the active player may shoot thier units.")
     end
 
     -- Always release in the shooting phase
-    obj:release()
+    unit:release()
 
-    -- Player has selected a FRIENDLY unit to shoot WITH.
-    if not self.selectedUnits then
-        self:shooterSelected(obj)
-    else -- Player has selected an ENEMY unit to shoot AT.
-        self:targetSelected(obj)
+    if not self.selectedUnit then 
+        -- Player has selected a FRIENDLY unit to shoot WITH.
+        self:shooterSelected(unit)
+    else 
+        -- Player has selected an ENEMY unit to shoot AT.
+        self:targetSelected(unit)
     end
 end
 
-function ShootPhase:shooterSelected(obj)
+function ShootPhase:shooterSelected(unit)
     UnitManager.resetAllUnits()
-    self.selectedUnits = obj:getSquadMembers(true)
-    self.selectedModel = obj
+    UnitManager:getSquad(unit.name, true)
+    self.selectedUnit = unit
 
-    local weapons = {}
-    for unit in Units do
-        for weapon in unit:getShootingWeapons() do
-            weapons[weapon.name] = weapon
-        end
+    for weapon in unit:getShootingWeapons() do
+        self.selectedUnit:createCustomButton(weapon.name, self, 'shootWeapon', weapon)
     end
-    for weapon in weapons do
-        self.selectedModel:createCustomButton(weapon.name, self, 'shootWeapon', weapon)
-    end
-    self.selectedModel:createCustomButton('Unit Done', self, 'unitDone')
+    self.selectedUnit:createCustomButton('Unit Done', self, 'unitDone')
 end
 
 function ShootPhase:shootWeapon(button)
@@ -62,24 +59,24 @@ function ShootPhase:shootWeapon(button)
 end
 
 function ShootPhase:unitDone()
-    for unit in self.selectedUnits do
+    for unit in self.selectedUnit.squad do
         self.unitsFired[unit:getID()] = true
     end
     self:reset()
-    self.selectedModel:clearControls()
+    self.selectedUnit:clearControls()
 end
 
-function ShootPhase:targetSelected(obj)
+function ShootPhase:targetSelected(unit)
     -- Target unit stats.
-    self.targetUnit = obj
+    self.targetUnit = unit
 
     -- Calculate closest range between units
-    for unit in self.selectedUnits do
-        local range = unit:rangeTo(obj)
-        if not self.range then
-            self.range = range
-        elseif range < self.range then
-            self.range = range
+    for u1 in self.selectedUnit.squad do
+        for u2 in self.targetUnit.squad do
+            local range = u1:rangeTo(u2)
+            if not self.range or range < self.range then
+                self.range = range
+            end
         end
     end
 
@@ -105,5 +102,5 @@ function ShootPhase:targetSelected(obj)
     Combat.resolveDamage(self)
 
     -- Loop back to selecting a weapon, until they click the "Unit Done" button.
-    self:shooterSelected(self.selectedModel)
+    self:shooterSelected(self.selectedUnit)
 end

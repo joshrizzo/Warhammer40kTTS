@@ -1,11 +1,16 @@
 Events = {
-    move = 'Move',
-    advance = 'Advance',
-    fallback = 'Fallback',
+    move = {
+        moving = "Moving",
+        moved = "Moved",
+        advancing = "Advancing",
+        advanced = "Advanced",
+        fallingBack = "FallingBack",
+        fellBack = "FellBack"
+    },
     psyker = {},
     shoot = {
-        shooting = 'Shooting',
-        shotAt = 'ShotAt'
+        shooting = "Shooting",
+        shotAt = "ShotAt"
     },
     charge = {},
     fight = {},

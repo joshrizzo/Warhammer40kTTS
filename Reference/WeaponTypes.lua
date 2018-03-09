@@ -1,0 +1,3 @@
+WeaponTypes = {
+    Melee = "Melee"
+}

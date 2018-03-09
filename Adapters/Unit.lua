@@ -6,23 +6,38 @@ Unit = {
 }
 
 function Unit:adaptFrom(obj)
+    -- Make sure this is actually a unit in the game.
+    if not obj or not obj.getName():match("^%[.+%].+") then
+        return nil
+    end
+
     -- Pull the Unit from the cache on obj, if it exists.
     local existing = obj.getTable("Unit")
-    if existing then return existing end
+    if existing then
+        return existing
+    end
 
     local new = setmetatable({}, {__index = Unit})
     new.object = obj
 
+    -- Get all modifiers and special rules.
     new.mods = {}
     local desc = obj.getDescription()
     for rule in desc:match(self.patterns.description) do
         SpecialRules[rule](new)
     end
 
+    -- Parse out the name field.
     local nameMatches = string.match(self.object.getName(), self.patterns.name)
     new.owner = nameMatches[0]
     new.name = nameMatches[1]
     new.remainingW = nameMatches[2]
+
+    -- Get the other members of the unit's squad.
+    local squad = UnitManager.getSquad(new.name)
+    if #squad > 1 then
+        new.squad = squad
+    end
 
     obj.setTable("Unit", new) -- Save on the object for caching.
     return new
@@ -46,7 +61,7 @@ function Unit:release()
     self.object.setLocation(self.object.getVar("startingLocation") or self.object.getLocation())
 end
 
-function Unit:resetUnit(highlightOff)
+function Unit:reset(highlightOff)
     self.object.interactable = true
     if highlightOff then
         self.object.highlightOff()
@@ -91,51 +106,46 @@ function Unit:getClosest()
 
     local closest = hits[0]
     for hit in hits do
-        if closest and closest.distance > hit.distance then
+        local unit = Unit:adaptFrom(hit.hit_object)
+        if closest and unit and closest.distance > hit.distance then
             closest = hit
         end
     end
-    return closest.hit_object
+    return Unit:adaptFrom(closest.hit_object)
 end
 
 function Unit:applyModifiers(event, phase)
-    return Stats.applyModifiers(event, phase, self.getDescription())
-end
-
-function Object:triggerEvent(event)
-    for event in string.gfind(self.getDescription(), "\\" .. event .. ":(.+);") do
-        loadstring(event)()
+    for mod in self.mods[event] do
+        mod(phase)
     end
 end
 
---TODO: Refactor into Unit class and parse from description on creation.
-
-function Object:getSquad()
-    return string.match(self.getDescription(), "Squad[(](.+)[)]")
-end
-
-function Object:inSquadCoherency()
-    local squad = self:getSquad()
+function Unit:inSquadCoherency()
     local isInCoherency = not squad
     for obj in self:objectsInRange(2) do
-        if obj:getSquad() == squad then
+        local unit = Unit:adaptFrom(obj)
+        if unit and unit.name == self.name and self.obj.getGUID() ~= unit.object.getGUID() then
             isInCoherency = true
         end
     end
     return isInCoherency
 end
 
-function Object:getSquadMembers(highlightOn)
-    local squad = self:getSquad()
-    if squad then
-        return UnitManager.getSquad(squad, highlightOn)
-    else
-        return {[self:getID()] = self}
+function Unit:inCombat()
+    local isInCombat = false
+    for unit in self.squad do
+        for obj in unit:objectsInRange(1) do
+            local u = Unit:adaptFrom(obj)
+            if u and u:isEnemy() then
+                isInCombat = true
+            end
+        end
     end
+    return isInCombat
 end
 
-function Object:createCustomButton(label, funcOwner, funcName, funcParams)
-    local position = self.getButtons()
+function Unit:createCustomButton(label, funcOwner, funcName, funcParams)
+    local buttons = self.object.getButtons()
     self.createButton(
         {
             rotation = {0, 0, 0},
@@ -146,15 +156,37 @@ function Object:createCustomButton(label, funcOwner, funcName, funcParams)
             click_function = funcName,
             function_params = funcParams,
             label = label,
-            position = {0, 1, #position}
+            position = {0, 1, #buttons}
         }
     )
 end
 
-function Object:clearControls()
-    self.clearButtons()
+function Unit:clearControls()
+    self.object.clearButtons()
 end
 
 function Object:getShootingWeapons()
-    -- TODO: parse out weapons
+    local shootingWeapons = {}
+    for unit in self.squad or {self} do
+        for weapon in unit.weapons do
+            if weapon.type ~= WeaponTypes.Melee then
+                shootingWeapons:insert(weapon)
+            end
+        end
+    end
+    return shootingWeapons
+end
+
+function Unit:applyAttribute(attr)
+    self.object.setName(self.object.getName() .. " (" .. attr .. ")")
+    self.attr[attr] = true
+end
+
+function Unit:hasAttribute(attr)
+    return self.attr[attr]
+end
+
+function Unit:clearAttributes()
+    self.object.setName(self.object.getName():gsub("(.+)", ""))
+    self.attr = {}
 end
