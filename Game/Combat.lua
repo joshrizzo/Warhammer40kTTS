@@ -1,3 +1,5 @@
+Combat = {}
+
 function Combat.rollCombat(phase)
     phase.combatRolls = {}
     for i = 0, i < phase.weapon.attacks do

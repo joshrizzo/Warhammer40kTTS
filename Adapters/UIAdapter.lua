@@ -1,3 +1,5 @@
+UIAdapter = {}
+
 function UIAdapter.messagePlayers(message, color)
     broadcastToAll(message, color)
 end

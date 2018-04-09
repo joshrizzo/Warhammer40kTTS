@@ -120,7 +120,7 @@ function MovePhase:cleanupLastUnit()
         end
     end
 
-    Game.log(Events.move, unit.name .. (advanceMove and " advanced " or " moved ") .. self.moveRange .. " inches.")
+    Game:logEvent(Events.move, unit.name .. (advanceMove and " advanced " or " moved ") .. self.moveRange .. " inches.")
     self:reset()
 end
 

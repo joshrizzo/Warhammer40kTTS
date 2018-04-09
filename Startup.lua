@@ -22,7 +22,7 @@ end
 
 function onPlayerTurnStart(startingPlayer, previousPlayer)
     if Game.turn == 0 then
-        self:createCustomButton("Next Phase", Game, "nextPhase")
+        createCustomButton("Next Phase", Game, "nextPhase", 2)
     end
     Game:nextTurn(startingPlayer)
 end

@@ -1,3 +1,5 @@
+UnitManager = {}
+
 function UnitManager.enableFriendliesOnly(notInCombat, exceptTheseIDs)
     for obj in getAllObjects() do
         local unit = Unit:adaptFrom(obj)

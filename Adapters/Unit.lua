@@ -146,6 +146,10 @@ end
 
 function Unit:createCustomButton(label, funcOwner, funcName, funcParams)
     local buttons = self.object.getButtons()
+    createCustomButton(label, funcOwner, funcName, funcParams, #buttons)
+end
+
+function createCustomButton(label, funcOwner, funcName, funcParams, position)
     self.createButton(
         {
             rotation = {0, 0, 0},
@@ -156,7 +160,7 @@ function Unit:createCustomButton(label, funcOwner, funcName, funcParams)
             click_function = funcName,
             function_params = funcParams,
             label = label,
-            position = {0, 1, #buttons}
+            position = {0, 1, position}
         }
     )
 end
@@ -165,7 +169,7 @@ function Unit:clearControls()
     self.object.clearButtons()
 end
 
-function Object:getShootingWeapons()
+function Unit:getShootingWeapons()
     local shootingWeapons = {}
     for unit in self.squad or {self} do
         for weapon in unit.weapons do

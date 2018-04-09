@@ -1,4 +1,5 @@
 Events = {
+    start = "Start",
     move = {
         moving = "Moving",
         moved = "Moved",
